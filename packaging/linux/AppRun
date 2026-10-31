@@ -1,0 +1,10 @@
+#!/bin/sh
+# Starts Lounge from inside the AppImage. Python 3, mpv and Chromium come from the system, as with server.py itself.
+HERE="$(dirname "$(readlink -f "$0")")"
+if ! command -v python3 >/dev/null 2>&1; then
+    echo "Lounge needs Python 3: sudo apt install python3 mpv chromium" >&2
+    exit 1
+fi
+# The AppImage is read-only, so Python must not try to save compiled files next to the code
+export PYTHONDONTWRITEBYTECODE=1
+exec python3 "$HERE/usr/share/lounge/lounge/server.py" "$@"

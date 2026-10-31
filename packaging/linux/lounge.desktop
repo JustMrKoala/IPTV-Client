@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Lounge
+Comment=Living room TV interface
+Exec=lounge --kiosk --remote
+Icon=lounge
+Categories=AudioVideo;Video;Player;TV;
+Terminal=false

@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lounge</title>
+<meta name="description" content="Living room home screen for Tuner, YouTube, Netflix and other apps.">
+<style>
+:root{--bg:#0b0b0d;--p1:#1c1c20;--p2:#2a2a30;--txt:#f5f5f1;--mut:#a3a3ab;--red:#e50914;--e:cubic-bezier(.2,.7,.2,1);color-scheme:dark}
+*{box-sizing:border-box;margin:0}
+[hidden]{display:none!important}
+html{font-size:clamp(14px,1.3vw,26px)}
+body{height:100vh;overflow:hidden;color:var(--txt);background:var(--bg);font:400 1rem/1.45 Cantarell,"Noto Sans","DejaVu Sans",system-ui,sans-serif}
+button,input,select{font:inherit;color:inherit;border:0;background:none}
+button{cursor:pointer}
+:focus{outline:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+svg{flex:none}
+
+#bg{position:fixed;inset:0;pointer-events:none}
+#bg i{position:absolute;inset:0;background:center/cover;opacity:0;transition:opacity 2s;animation:drift 50s linear infinite alternate}
+#bg i.on{opacity:.45}
+#bg:after{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 85% 10%,#e5091422,transparent 50%),linear-gradient(180deg,#0b0b0d99 0,#0b0b0d33 35%,#0b0b0dee 72%,var(--bg))}
+body.away #bg i{animation-play-state:paused}
+@keyframes drift{to{transform:scale(1.08) translateX(-1.5%)}}
+
+.top{position:relative;display:flex;align-items:flex-start;justify-content:space-between;padding:2.4rem 3.5rem 0}
+.brand{display:flex;align-items:center;gap:.45rem;color:var(--red);font-size:1.4rem;font-weight:900;letter-spacing:-.03em}
+.tools{display:flex;gap:.5rem}
+.ib{display:grid;place-items:center;width:2.8rem;height:2.8rem;border-radius:50%;color:#e5e5e5;transition:background .2s,color .2s,transform .2s var(--e)}
+.ib:hover{background:#ffffff1a}
+.ib:focus{background:var(--txt);color:#000;transform:scale(1.08)}
+
+.clock{position:relative;padding:9vh 3.5rem 0}
+.clock time{display:block;font-size:6.5rem;font-weight:800;line-height:1;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.clock p{font-size:1.5rem;color:#ddd;margin-top:.6rem}
+.clock p span{color:var(--mut)}
+
+.apps{position:absolute;inset:auto 0 0;padding:0 3.5rem 5rem}
+.apps h2{font-size:1.1rem;font-weight:700;color:#ddd;margin-bottom:1rem}
+.row{display:flex;gap:1.4rem;overflow-x:auto;padding:1.4rem 1.4rem 1rem;margin:-1.4rem -1.4rem 0;scroll-padding-inline:1.4rem;scrollbar-width:none}
+.app{flex:none;display:grid;gap:.9rem;justify-items:center;width:17rem}
+.app .lab{font-weight:600;color:var(--mut);transition:color .2s}
+.app:hover .lab,.app:focus .lab{color:#fff}
+.row::-webkit-scrollbar{display:none}
+.tile{position:relative;width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;display:grid;place-items:center;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--c) 92%,#fff) 0,var(--c) 45%,color-mix(in srgb,var(--c) 55%,#000) 100%);
+  box-shadow:0 10px 30px #0008;transition:transform .3s var(--e),box-shadow .3s var(--e),filter .3s}
+.tile:after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px #ffffff1f}
+.tile svg{width:38%;height:auto;filter:drop-shadow(0 4px 10px #0005)}
+.tile .mono{font-size:3.6rem;font-weight:900;letter-spacing:-.04em;color:#fff;text-shadow:0 4px 14px #0005}
+.tile .need{position:absolute;left:.7rem;top:.7rem;padding:.15rem .55rem;border-radius:4px;background:#000b;font-size:.7rem;font-weight:700}
+.tile.off{filter:grayscale(.7) brightness(.7)}
+.app:hover .tile,.app:focus .tile{transform:scale(1.07);box-shadow:0 22px 50px #000c,0 0 0 4px #fff}
+.hint{margin-top:1.4rem;color:#777;font-size:.85rem}
+.hint b{color:#aaa;font-weight:600}
+
+.sheet{position:fixed;inset:0;z-index:7;display:grid;place-items:center;background:#000b;backdrop-filter:blur(6px);animation:fd .2s}
+.panel{width:min(40rem,92vw);max-height:86vh;overflow:auto;padding:1.6rem 1.8rem;border-radius:14px;background:#17171b;box-shadow:0 30px 90px #000;scrollbar-width:thin}
+.panel h2{font-size:1.4rem;margin-bottom:.3rem}
+.panel h3{font-size:1rem;margin:1.6rem 0 .7rem;color:#ddd}
+.panel .sub{color:var(--mut);font-size:.9rem}
+.list{display:grid;gap:.4rem;margin-top:1rem}
+.it{display:flex;align-items:center;gap:.7rem;padding:.5rem .6rem;border-radius:8px;background:var(--p1)}
+.it i{width:1.1rem;height:1.1rem;border-radius:4px;background:var(--c);flex:none}
+.it span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.it small{color:var(--mut)}
+.sb{display:grid;place-items:center;width:2.3rem;height:2.3rem;border-radius:6px;background:var(--p2);transition:background .2s}
+.sb:hover{background:#3a3a42}
+.sb:focus{background:var(--txt);color:#000}
+.sb:disabled{opacity:.3;cursor:default}
+form{display:grid;gap:.6rem;grid-template-columns:1fr 1fr}
+form .full{grid-column:1/-1}
+input,select{width:100%;padding:.7rem .9rem;border-radius:6px;background:#2b2b31;border:1px solid transparent}
+input:focus,select:focus{border-color:#fff}
+input[type=color]{padding:.2rem;height:2.9rem}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.65rem 1.4rem;border-radius:6px;font-weight:700;background:#ffffff26;transition:background .2s,transform .2s var(--e)}
+.btn:hover{background:#ffffff3a}
+.btn.pri{background:#fff;color:#000}
+.btn:focus{outline:3px solid #fff;outline-offset:3px}
+.langs{display:grid;grid-template-columns:repeat(auto-fill,minmax(12rem,1fr));gap:.5rem;margin-top:1.2rem}
+.acts{display:flex;gap:.7rem;justify-content:flex-end;margin-top:1.6rem}
+
+#ov{position:fixed;inset:0;z-index:8;display:grid;place-items:center;background:#000;animation:fd .25s}
+#ov div{display:grid;justify-items:center;gap:1.2rem;text-align:center}
+#ov .tile{width:14rem;animation:pop .5s var(--e)}
+#ov p{color:var(--mut)}
+@keyframes pop{from{transform:scale(.85);opacity:0}}
+@keyframes fd{from{opacity:0}}
+#toast{position:fixed;z-index:9;left:50%;bottom:2rem;padding:.75rem 1.4rem;border-radius:6px;background:var(--txt);color:#000;font-weight:600;opacity:0;translate:-50% 14px;transition:opacity .3s,translate .3s var(--e);pointer-events:none;max-width:90vw}
+#toast.on{opacity:1;translate:-50% 0}
+@media(max-width:800px){.top,.clock,.apps{padding-left:1rem;padding-right:1rem}.clock time{font-size:4rem}.app{width:12rem}}
+@media(prefers-reduced-motion:reduce){*,:after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="bg" aria-hidden="true"><i></i><i></i></div>
+<header class="top">
+  <p class="brand"><svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true"><rect x="2" y="6" width="28" height="19" rx="4" fill="currentColor"/><path d="M13 11.5v8l7-4z" fill="#0b0b0d"/><path d="M10 28h12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>LOUNGE</p>
+  <div class="tools"><button class="ib" data-a="edit" aria-label="Customize dashboard" title="Customize"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button><button class="ib" data-a="langs" aria-label="Language" title="Language"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.8 3 2.8 15 0 18M12 3c-2.8 3-2.8 15 0 18"/></svg></button></div>
+</header>
+<main>
+  <h1 class="sr">Home screen</h1>
+  <section class="clock" aria-label="Clock"><time id="time"></time><p id="date"></p></section>
+  <section class="apps" aria-label="Apps"><h2>Your apps</h2><div class="row" id="tiles"></div><p class="hint" id="hint"></p></section>
+</main>
+<div id="sheet" class="sheet" hidden></div>
+<div id="ov" hidden></div>
+<div id="toast" role="status"></div>
+<script src="/i18n.js"></script>
+<script>
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
+const ICONS={
+  tvhub:'<svg viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="6" width="28" height="19" rx="4" fill="#e50914"/><path d="M13 11.5v8l7-4z" fill="#fff"/><path d="M10 28h12" stroke="#e50914" stroke-width="2.5" stroke-linecap="round"/></svg>',
+  youtube:'<svg viewBox="0 0 32 24" aria-hidden="true"><rect x="1" y="1" width="30" height="22" rx="6" fill="#fff"/><path d="M13 7v10l8.5-5z" fill="#ff0033"/></svg>',
+  netflix:'<svg viewBox="0 0 20 32" aria-hidden="true" style="width:22%"><path d="M2 1h5l6 18V1h5v30c-1.6-.2-3.3-.3-5-.3L7 13v17.4c-1.7.1-3.4.3-5 .6z" fill="#fff"/></svg>',
+  twitch:'<svg viewBox="0 0 24 24" aria-hidden="true" style="width:30%"><path d="M11.57 4.71h1.72v5.15h-1.72zm4.72 0H18v5.15h-1.71zM6 0 1.71 4.29v15.42h5.15V24l4.28-4.29h3.43L22.29 12V0zm14.57 11.14-3.43 3.43h-3.43l-3 3v-3H6.86V1.71h13.71z" fill="#fff"/></svg>',
+  web:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.8 3 2.8 15 0 18M12 3c-2.8 3-2.8 15 0 18"/></svg>'
+};
+const UP='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>';
+const DOWN=UP.replace('M15 6l-6 6 6 6','M9 6l6 6-6 6');
+const DEL='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+let D={tiles:[],remote:''},draft=null,pending=null;
+
+const api=async(path,body)=>{
+  const r=await fetch('/api/'+path,body?{method:'POST',headers:{'X-TVHub':'1','Content-Type':'application/json'},body:JSON.stringify(body)}:undefined);
+  const j=await r.json();
+  if(j.error)throw new Error(j.error);
+  return j;
+};
+const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('on'),4000)};
+const icon=t=>ICONS[t.icon]||`<span class="mono">${esc(t.name.slice(0,1).toUpperCase())}</span>`;
+
+function tick(){
+  const now=new Date();
+  $('#time').textContent=now.toLocaleTimeString(LANG,{hour:'2-digit',minute:'2-digit'});
+  $('#time').dateTime=now.toISOString();
+  const h=now.getHours();
+  $('#date').innerHTML=`${tr(h<5?'Good night':h<12?'Good morning':h<18?'Good afternoon':'Good evening')} <span>· ${esc(now.toLocaleDateString(LANG,{weekday:'long',day:'numeric',month:'long'}))}</span>`;
+  // Wakes at the start of the next minute so the clock never lags
+  clearTimeout(tick.t);
+  tick.t=setTimeout(tick,60000-now.getSeconds()*1000-now.getMilliseconds()+50);
+}
+
+const needs=t=>tr(t.installing?'Installing {name}':'Needs {name}',{name:t.needs});
+function draw(){
+  $('#tiles').innerHTML=D.tiles.map(t=>`<button class="app" data-a="open" data-id="${esc(t.id)}"${t.ready?'':` aria-description="${esc(needs(t))}"`}><span class="tile${t.ready?'':' off'}" style="--c:${t.color}">${icon(t)}${t.ready?'':`<span class="need">${esc(needs(t))}</span>`}</span><span class="lab">${esc(t.name)}</span></button>`).join('');
+  $('#hint').innerHTML=D.remote?`${tr('Phone remote')}: <b>${esc(D.remote)}</b>`:'';
+}
+
+async function load(){
+  try{D=await api('dashboard')}catch{toast(tr('The dashboard could not be loaded.'))}
+  if(D.lang!==LANG||!load.done){setLang(D.lang);texts();tick();load.done=true}
+  if(!D.lang&&!load.asked){load.asked=true;setTimeout(langs)}
+  const was=document.activeElement?.closest?.('.app')?.dataset.id;
+  draw();
+  if(was)$(`.app[data-id="${CSS.escape(was)}"]`)?.focus();
+  if(!document.activeElement||document.activeElement===document.body)$('.app')?.focus();
+}
+
+async function openApp(id){
+  const t=D.tiles.find(t=>t.id===id);
+  if(!t||pending)return;
+  if(t.type==='tvhub'){location.href='/tuner';return}
+  if(!t.ready)return install(t);
+  pending=id;
+  const ov=$('#ov');
+  ov.innerHTML=`<div tabindex="-1"><span class="tile" style="--c:${t.color}">${icon(t)}</span><h2>${tr('Opening {name}',{name:esc(t.name)})}</h2><p>${tr('Press Home on the remote to come back here')}</p></div>`;
+  ov.hidden=false;
+  $('div',ov).focus();
+  clearTimeout(openApp.t);
+  openApp.t=setTimeout(done,20000);
+  try{await api('launch',{id})}catch{done();toast(tr('{name} could not be opened.',{name:t.name}))}
+}
+
+// Google Chrome installs itself the first time an app that needs it is opened, and the app opens once it is ready
+async function install(t){
+  if(t.installing)return toast(tr('{browser} is still installing. {name} opens when it is done.',{browser:t.needs,name:t.name}));
+  if(t.browser!=='chrome')return toast(tr('{name} needs {browser}. See the README for how to install it.',{browser:t.needs,name:t.name}));
+  install.then=t.id;
+  try{await api('install',{browser:t.browser});toast(tr('Installing {browser} for {name}. Type your password if a window asks for it.',{browser:t.needs,name:t.name}))}
+  catch{install.then=null;toast(tr('{browser} could not be installed. See the README for how to install it.',{browser:t.needs}))}
+}
+
+function done(){
+  const id=pending;
+  pending=null;
+  clearTimeout(openApp.t);
+  $('#ov').hidden=true;
+  document.body.classList.remove('away');
+  if(id)$(`.app[data-id="${CSS.escape(id)}"]`)?.focus();
+}
+
+function editor(){
+  draft=draft||D.tiles.map(t=>({...t}));
+  const s=$('#sheet');
+  s.innerHTML=`<div class="panel" role="dialog" aria-label="${tr('Customize dashboard')}"><h2>${tr('Customize')}</h2><p class="sub">${tr('Reorder or remove apps, or add any website as a fullscreen app.')}</p>
+    <div class="list">${draft.map((t,i)=>`<div class="it" style="--c:${t.color}"><i></i><span>${esc(t.name)} <small>${t.type==='tvhub'?tr('Built in'):esc(t.url.replace(/^https?:\/\//,'').split('/')[0])}</small></span>
+      <button class="sb" data-a="mv" data-i="${i}" data-d="-1" aria-label="${tr('Move {name} left',{name:esc(t.name)})}"${i?'':' disabled'}>${UP}</button>
+      <button class="sb" data-a="mv" data-i="${i}" data-d="1" aria-label="${tr('Move {name} right',{name:esc(t.name)})}"${i<draft.length-1?'':' disabled'}>${DOWN}</button>
+      <button class="sb" data-a="rm" data-i="${i}" aria-label="${tr('Remove {name}',{name:esc(t.name)})}"${t.type==='tvhub'?' disabled':''}>${DEL}</button></div>`).join('')}</div>
+    <h3>${tr('Add a website')}</h3>
+    <form id="add"><input name="name" placeholder="${tr('Name')}" required maxlength="40"><input name="url" type="url" placeholder="https://..." required>
+      <select name="browser" aria-label="${tr('Browser')}"><option value="chromium">Chromium</option><option value="chrome">${tr('Google Chrome (needed for Netflix, Disney+, Prime Video)')}</option></select>
+      <input name="color" type="color" value="#3b82f6" aria-label="${tr('Tile color')}"><button class="btn full">${tr('Add to the list')}</button></form>
+    <div class="acts"><button class="btn" data-a="cancel">${tr('Cancel')}</button><button class="btn pri" data-a="save">${tr('Save')}</button></div></div>`;
+  s.hidden=false;
+}
+
+// Texts written in the page itself, filled in once the language is known
+function texts(){
+  $('h1.sr').textContent=tr('Home screen');
+  $('.clock').setAttribute('aria-label',tr('Clock'));
+  $('.apps').setAttribute('aria-label',tr('Apps'));
+  $('.apps h2').textContent=tr('Your apps');
+  for(const [a,label,title] of [['edit','Customize dashboard','Customize'],['langs','Language','Language']]){
+    const b=$(`[data-a="${a}"]`);
+    b.setAttribute('aria-label',tr(label));
+    b.title=tr(title);
+  }
+}
+
+// Asked on first start and from the globe button. The page reloads so every text uses the new language.
+function langs(){
+  const s=$('#sheet');
+  s.innerHTML=`<div class="panel" role="dialog" aria-label="${tr('Choose your language')}"><h2>${tr('Choose your language')}</h2><p class="sub">${tr('Summaries and menus appear in this language, and movies and series show the version in your language when there is one.')}</p>
+    <div class="langs">${LANGUAGES.map(l=>`<button class="btn${l.code===(D.lang||LANG)?' pri':''}" data-a="setlang" data-v="${l.code}">${esc(l.name)}</button>`).join('')}</div></div>`;
+  s.hidden=false;
+  (s.querySelector('.pri')||s.querySelector('button')).focus();
+}
+
+function closeEditor(){
+  draft=null;
+  $('#sheet').hidden=true;
+  $('[data-a="edit"]').focus();
+}
+
+document.addEventListener('click',async e=>{
+  const el=e.target.closest('[data-a]');
+  if(!el){if(e.target.id==='sheet')closeEditor();return}
+  const d=el.dataset;
+  if(d.a==='open')return openApp(d.id);
+  if(d.a==='edit')return editor();
+  if(d.a==='langs')return langs();
+  if(d.a==='setlang'){try{await api('lang',{lang:d.v});location.reload()}catch{toast(tr('That did not work. Try again.'))}return}
+  if(d.a==='cancel')return closeEditor();
+  if(d.a==='mv'){const i=+d.i,j=i+ +d.d;[draft[i],draft[j]]=[draft[j],draft[i]];editor();return $(`[data-a="mv"][data-i="${j}"][data-d="${d.d}"]`)?.focus()||$(`[data-a="mv"][data-i="${j}"]`)?.focus()}
+  if(d.a==='rm'){draft.splice(+d.i,1);editor();return $('.sb:not(:disabled)')?.focus()}
+  if(d.a==='save'){
+    try{D=await api('dashboard',{tiles:draft.map(({ready,needs,installing,...t})=>t)});draw();closeEditor();toast(tr('Dashboard saved'))}
+    catch{toast(tr('That could not be saved. Check the website addresses.'))}
+  }
+});
+
+document.addEventListener('submit',e=>{
+  e.preventDefault();
+  const f=Object.fromEntries(new FormData(e.target));
+  draft.push({type:'web',name:f.name.trim(),url:f.url.trim(),browser:f.browser,color:f.color,icon:''});
+  editor();
+  toast(tr('{name} added. Press Save to keep it.',{name:f.name}));
+});
+
+const KEYS={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',Enter:'ok',Escape:'back',Backspace:'back'};
+
+function move(dir){
+  const root=$('#sheet:not([hidden])')||document;
+  const all=[...root.querySelectorAll('button:not(:disabled),input,select')].filter(e=>{const r=e.getBoundingClientRect();return r.width&&r.height&&!e.closest('[hidden]')});
+  const now=document.activeElement;
+  if(!all.includes(now)){(root.querySelector('.app')||all[0])?.focus();return}
+  const a=now.getBoundingClientRect(),ax=a.left+a.width/2,ay=a.top+a.height/2;
+  let best,score=Infinity;
+  for(const el of all){
+    if(el===now)continue;
+    const r=el.getBoundingClientRect(),dx=r.left+r.width/2-ax,dy=r.top+r.height/2-ay;
+    const along={left:-dx,right:dx,up:-dy,down:dy}[dir],across=dir==='left'||dir==='right'?Math.abs(dy):Math.abs(dx);
+    if(along<=2)continue;
+    const s=along+across*2.5;
+    if(s<score){score=s;best=el}
+  }
+  if(best){best.focus({preventScroll:true});best.scrollIntoView({block:'nearest',inline:'nearest',behavior:'smooth'})}
+}
+
+function remote(c){
+  if(c==='appopened'){document.body.classList.add('away');return}
+  if(c==='appfailed'){if(pending)toast(tr('That app could not be opened.'));return done()}
+  if(c==='appclosed'||c==='home'){if(!$('#sheet').hidden&&c==='home')closeEditor();return done()}
+  if(c==='installing')return load();
+  if(c==='installed'||c==='installfailed'){
+    const id=install.then;
+    install.then=null;
+    load().then(()=>{if(c==='installfailed')toast(tr('{browser} could not be installed. See the README for how to install it.',{browser:'Google Chrome'}));else if(id)openApp(id)});
+    return;
+  }
+  if(c==='library'||c==='epg'||c==='stopped')return;
+  if(pending)return;
+  const el=document.activeElement;
+  if(c==='ok'){if(el&&el!==document.body&&el.tagName!=='INPUT')el.click();return}
+  if(c==='back'){if(el?.tagName==='INPUT')return el.blur();if(!$('#sheet').hidden)return closeEditor();return $('.app')?.focus()}
+  if(['up','down','left','right'].includes(c))move(c);
+}
+
+document.addEventListener('keydown',e=>{
+  const c=KEYS[e.key];
+  if(!c)return;
+  const typing=['INPUT','SELECT'].includes(e.target.tagName);
+  if(typing&&(c==='left'||c==='right'||c==='ok'||e.key==='Backspace'))return;
+  e.preventDefault();
+  if(e.repeat&&c==='ok')return;
+  remote(c);
+});
+
+async function wall(){
+  try{
+    const w=await api('wallpapers');
+    if(!w.length)return;
+    const L=[...document.querySelectorAll('#bg i')];
+    let n=0;
+    const next=()=>{if(document.body.classList.contains('away'))return;const a=L[n%2],b=L[(n+1)%2];a.style.backgroundImage=`url("${w[n%w.length]}")`;b.classList.remove('on');a.classList.add('on');n++};
+    next();
+    setInterval(next,20000);
+  }catch{}
+}
+
+new EventSource('/api/events').onmessage=e=>remote(e.data);
+window.addEventListener('focus',()=>{if(!pending)document.body.classList.remove('away')});
+tick();
+load();
+wall();
+</script>
+</body>
+</html>

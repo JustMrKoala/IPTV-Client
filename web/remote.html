@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Lounge Remote</title>
+<meta name="description" content="Phone remote for Lounge on your home network.">
+<meta name="theme-color" content="#141414">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Remote">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--ink:#141414;--glass:rgba(255,255,255,.09);--txt:#f5f5f1;--gold:#e50914;color-scheme:dark}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{display:grid;place-items:center;background:radial-gradient(90% 60% at 50% 0,#3a0a0d 0,transparent 70%),var(--ink);color:var(--txt);font:600 1rem system-ui,sans-serif;touch-action:manipulation;user-select:none;-webkit-user-select:none;overscroll-behavior:none}
+main{width:min(92vw,22rem);display:grid;gap:1.3rem;padding:max(1rem,env(safe-area-inset-top)) 0 max(1rem,env(safe-area-inset-bottom))}
+[hidden]{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.row{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem}
+.pad{display:grid;grid:repeat(3,5.2rem)/repeat(3,5.2rem);gap:.5rem;justify-content:center}
+.k{display:grid;place-items:center;height:4.2rem;border:0;border-radius:22px;background:var(--glass);color:var(--txt);font:inherit;transition:transform .12s,background .15s}
+.k:active{transform:scale(.92);background:rgba(255,255,255,.24)}
+.pad .k{height:auto}
+.up{grid-area:1/2}
+.left{grid-area:2/1}
+.ok{grid-area:2/2;background:var(--gold);color:#fff;border-radius:50%;font-size:1.25rem}
+.ok:active{background:#f6121d}
+.right{grid-area:2/3}
+.down{grid-area:3/2}
+.nums{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem}
+.nums .k{height:3.6rem;font-size:1.4rem}
+.tog{height:3rem;font-size:.95rem;letter-spacing:.04em}
+.typer{display:flex;gap:.6rem}
+.typer input{flex:1;min-width:0;height:3.4rem;padding:0 1rem;border:2px solid transparent;border-radius:16px;background:var(--glass);color:var(--txt);font:inherit;font-weight:500}
+.typer input{user-select:text;-webkit-user-select:text}
+.typer input:focus{outline:0;border-color:var(--gold)}
+.typer .k{width:5.4rem;height:3.4rem;background:var(--gold);color:#fff}
+.tog[aria-expanded=true]{background:var(--gold);color:#fff}
+@media(prefers-reduced-motion:reduce){.k{transition:none}}
+</style>
+</head>
+<body>
+<main></main>
+<script>
+const B={
+  ok:['Select',''],
+  up:['Up','M6 15l6-6 6 6'],
+  down:['Down','M6 9l6 6 6-6'],
+  left:['Left','M15 6l-6 6 6 6'],
+  right:['Right','M9 6l6 6-6 6'],
+  back:['Back','M9 14L4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3'],
+  home:['Home','M4 11l8-7 8 7v9h-5v-6H9v6H4z'],
+  stop:['Stop playback','M7 7h10v10H7z'],
+  seek_back:['Back 10 seconds','M11 7l-6 5 6 5zM19 7l-6 5 6 5z'],
+  playpause:['Play or pause','M6 5l8 7-8 7zM17 5v14'],
+  seek_fwd:['Forward 10 seconds','M13 7l6 5-6 5zM5 7l6 5-6 5z'],
+  voldown:['Volume down','M4 9v6h4l5 4V5L8 9zM16 12h4'],
+  mute:['Mute','M4 9v6h4l5 4V5L8 9zM17 9l4 6M21 9l-4 6'],
+  volup:['Volume up','M4 9v6h4l5 4V5L8 9zM16 12h4M18 10v4']
+};
+const key=(c,cls='',rep=false)=>`<button class="k ${cls}" data-c="${c}"${rep?' data-r':''} aria-label="${B[c][0]}">${c==='ok'?'OK':`<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${B[c][1]}"/></svg>`}</button>`;
+document.querySelector('main').innerHTML=`<h1 class="sr">Lounge remote</h1>
+<div class="row">${key('back')}${key('home')}${key('stop')}</div>
+<div class="pad">${key('up','up',true)}${key('left','left',true)}${key('ok','ok')}${key('right','right',true)}${key('down','down',true)}</div>
+<div class="row">${key('seek_back','',true)}${key('playpause')}${key('seek_fwd','',true)}</div>
+<div class="row">${key('voldown','',true)}${key('mute')}${key('volup','',true)}</div>
+<div class="row" style="grid-template-columns:1fr 1fr"><button class="k tog" data-panel="typer" aria-expanded="false" aria-controls="typer">Type text</button><button class="k tog" data-panel="nums" aria-expanded="false" aria-controls="nums">123 Channel</button></div>
+<form class="typer" id="typer" hidden><input id="txt" type="text" enterkeyhint="search" autocomplete="off" autocapitalize="off" placeholder="Search or type into the app" aria-label="Text to send to the TV" maxlength="100"><button class="k">Send</button></form>
+<div class="nums" id="nums" hidden>${[1,2,3,4,5,6,7,8,9,'',0,''].map(d=>d===''?'<span></span>':`<button class="k" data-c="${d}" aria-label="${d}">${d}</button>`).join('')}</div>`;
+// The number pad and text box stay hidden until needed, so the main buttons stay easy to reach
+document.querySelectorAll('.tog').forEach(t=>t.addEventListener('click',()=>{
+  const open=t.getAttribute('aria-expanded')!=='true';
+  document.querySelectorAll('.tog').forEach(o=>{const on=o===t&&open;o.setAttribute('aria-expanded',on);document.getElementById(o.dataset.panel).hidden=!on});
+  if(open&&t.dataset.panel==='typer')document.getElementById('txt').focus();
+}));
+// Text is sent with your phone's own keyboard: into Tuner search, or the focused box in YouTube or Netflix
+document.getElementById('typer').addEventListener('submit',e=>{
+  e.preventDefault();
+  navigator.vibrate?.(12);
+  fetch(base+'cmd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cmd:'text',text:document.getElementById('txt').value})}).catch(()=>{});
+});
+const base=location.pathname.endsWith('/')?location.pathname:location.pathname+'/';
+const send=c=>{
+  navigator.vibrate?.(12);
+  fetch(base+'cmd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cmd:c}),keepalive:true}).catch(()=>{});
+};
+let wait,tick;
+const release=()=>{clearTimeout(wait);clearInterval(tick)};
+document.querySelectorAll('[data-c]').forEach(b=>{
+  const c=b.dataset.c;
+  b.addEventListener('pointerdown',e=>{
+    e.preventDefault();
+    send(c);
+    if(b.hasAttribute('data-r'))wait=setTimeout(()=>{tick=setInterval(()=>send(c),140)},380);
+  });
+  ['pointerup','pointerleave','pointercancel'].forEach(t=>b.addEventListener(t,release));
+});
+document.addEventListener('contextmenu',e=>e.preventDefault());
+</script>
+</body>
+</html>

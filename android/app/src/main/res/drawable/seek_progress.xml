@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Track, what is buffered, and what has played in Netflix red -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@android:id/background" android:gravity="center_vertical" android:height="4dp">
+        <shape><corners android:radius="2dp" /><solid android:color="#4DFFFFFF" /></shape>
+    </item>
+    <item android:id="@android:id/secondaryProgress" android:gravity="center_vertical" android:height="4dp">
+        <scale android:scaleWidth="100%"><shape><corners android:radius="2dp" /><solid android:color="#80FFFFFF" /></shape></scale>
+    </item>
+    <item android:id="@android:id/progress" android:gravity="center_vertical" android:height="4dp">
+        <scale android:scaleWidth="100%"><shape><corners android:radius="2dp" /><solid android:color="@color/red" /></shape></scale>
+    </item>
+</layer-list>
