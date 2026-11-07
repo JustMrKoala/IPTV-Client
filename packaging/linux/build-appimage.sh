@@ -13,7 +13,7 @@ tool=/tmp/appimagetool-x86_64.AppImage
 
 app=$(mktemp -d)/Lounge.AppDir
 mkdir -p "$app/usr/share/lounge/lounge"
-cp lounge/server.py lounge/apps.py "$app/usr/share/lounge/lounge/"
+cp lounge/*.py "$app/usr/share/lounge/lounge/"
 cp -r web "$app/usr/share/lounge/"
 cp packaging/linux/AppRun "$app/AppRun"
 chmod +x "$app/AppRun"

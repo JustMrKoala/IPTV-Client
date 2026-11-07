@@ -25,6 +25,7 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 import apps
+import downloads
 
 WEB = apps.WEB
 WINDOWS = os.name == 'nt'
@@ -140,7 +141,7 @@ def save_state():
 def public_state():
     sources = [{'id': s['id'], 'name': s['name'], 'type': s['type']} for s in STATE['sources']]
     return {'sources': sources, 'fav': STATE['fav'], 'progress': STATE['progress'], 'tmdb': bool(STATE['tmdb']), 'remote': REMOTE['url'],
-            'playing': playing(), 'recent': STATE.get('recent', []), 'lang': STATE.get('lang', '')}
+            'playing': playing(), 'recent': STATE.get('recent', []), 'lang': STATE.get('lang', ''), 'downloads': {'dir': downloads.folder()}}
 
 
 class Store:
@@ -704,6 +705,17 @@ def play(url, key, pos, meta):
         return True
 
 
+def add_downloads(items):
+    """Movies are found in the library by id, and episodes send their address, the same as on Play."""
+    found = []
+    for i in items[:500]:
+        url = stream_url(i)
+        if not re.match(r'https?://', url):
+            raise ValueError('unsupported address')
+        found.append((url, i))
+    downloads.add(found)
+
+
 def add_source(body):
     if body['type'] not in ('m3u', 'xtream') or not re.match(r'https?://', body['url']):
         raise ValueError('invalid source')
@@ -1030,6 +1042,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.reply(epg_reply(q['src']), gzipped=True)
             if url.path == '/api/dashboard':
                 return self.reply(dashboard())
+            if url.path == '/api/downloads':
+                return self.reply(downloads.status())
             self.reply({'error': 'Not found'}, 404)
         except ConnectionError:
             pass
@@ -1074,6 +1088,14 @@ class Handler(BaseHTTPRequestHandler):
                 else:
                     STATE['fav'].pop(body['key'], None)
                 save_state()
+            elif path == '/api/download':
+                add_downloads(body['items'])
+            elif path == '/api/download/retry':
+                downloads.retry(body['id'])
+            elif path == '/api/download/remove':
+                downloads.remove(body['id'])
+            elif path == '/api/download/folder':
+                downloads.set_dir(str(body['dir']))
             elif path == '/api/source':
                 result = add_source(body)
             elif path == '/api/source/delete':
@@ -1141,6 +1163,7 @@ def main():
         sys.exit(1)
     write_input_conf()
     apps.setup(CONFIG, broadcast)
+    downloads.setup(CONFIG, failure)
     if not MPV:
         print('mpv was not found, so Tuner cannot play videos. Install it and make sure it is on the PATH.', file=sys.stderr)
     if '--kiosk' in sys.argv:

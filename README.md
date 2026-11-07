@@ -4,7 +4,7 @@ A living room interface for Linux. It opens on Lounge, a TV style home screen wi
 
 ## Folders
 
-- `lounge/`: the program itself, `server.py` and `apps.py`, for Linux and Windows alike.
+- `lounge/`: the program itself, `server.py`, `apps.py` and `downloads.py`, for Linux and Windows alike.
 - `web/`: the TV interface (`index.html`, `i18n.js`), Lounge's home screen (`dashboard.html`), the phone remote (`remote.html`) and the YouTube ad filter. The Android app uses `index.html`, `i18n.js` and `remote.html` too.
 - `android/`: the Android TV app.
 - `packaging/`: what goes into the Windows exe and the Linux AppImage, and the scripts that build them.
@@ -80,6 +80,14 @@ Providers often carry the same movie or series several times, once per language.
 
 
 Open Tuner from Lounge, go to Settings (the gear at the top right), add an M3U address or an Xtream server address with username and password, then browse Live TV, Movies and Series. Each section shows one row per category. To filter by category, open Search with the magnifier at the top right, pick a type and choose a category from the dropdown. Settings is the gear next to it. To type with the remote, move to the search box and press OK: an on-screen keyboard opens, and Results jumps to what you found. A search finds titles containing all the words you type, in any order. Press the heart on anything to save it. Movies and episodes remember where you stopped and resume automatically.
+
+## Downloads
+
+Movie pages have a Download button, series pages have Download season, and each episode has its own download arrow. The Downloads page in Tuner's menu shows what is waiting, how far the current file is, and what failed, with Try again and Cancel. Files are saved one at a time, and a broken connection or a restart carries on from where it stopped. Nothing extra has to be installed.
+
+The folder is `Videos\Lounge` in your home folder unless you change it under Settings. Names follow [KoalaIPTV](https://github.com/JustMrKoala/koalaiptv): `Heat (1995).mp4` for movies, and `My Show\Season 01\My Show S01E02 - Title.mkv` for episodes.
+
+Live channels cannot be saved, and neither can playlist entries that are HLS streams (`.m3u8`) instead of files. Many providers allow one connection at a time, so watching something during a download can make one of the two fail; the download retries by itself for about a minute. Downloads are part of Lounge on Linux and Windows, not of the Android app.
 
 ## Artwork
 

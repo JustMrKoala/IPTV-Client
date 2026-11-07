@@ -200,6 +200,21 @@ body.typing .pg{padding-bottom:20rem}
 .tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin:.5rem 0 1rem}
 .eps{display:grid;max-width:56rem;animation:in .3s var(--e)}
 
+/* Downloads */
+.dl-ep{flex:none;display:grid;place-items:center;width:2.4rem;height:2.4rem;border-radius:50%;color:var(--mut);transition:background .2s,color .2s}
+.dl-ep:hover{background:#ffffff1a;color:#fff}
+.dl-ep:focus{outline:0;background:var(--txt);color:#000}
+.dl-ep.done{color:#46d369}
+.dl-ep.busy{color:var(--red)}
+.dlr{display:flex;align-items:center;gap:1rem;padding:.9rem 0;border-bottom:1px solid #ffffff14}
+.dlr>div{flex:1;min-width:0}
+.dlr b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dlr small{color:var(--mut)}
+.dlr small.bad{color:#ff7a7a}
+.dlr .bar{height:4px;margin-top:.4rem;border-radius:2px;background:#ffffff26;overflow:hidden}
+.dlr .bar i{display:block;height:100%;background:var(--red);width:calc(var(--w,0)*1%)}
+.dlf{color:var(--mut);margin-bottom:1rem;word-break:break-all}
+
 /* Settings */
 .set{max-width:40rem}
 .set h2{font-size:1.2rem;margin:2rem 0 .8rem}
@@ -262,6 +277,7 @@ const I={
   info:icon('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>'),
   tv:icon('<rect x="3" y="5" width="18" height="13" rx="2"/><path d="M8 21h8"/>',18),
   x:icon('<path d="M6 6l12 12M18 6L6 18"/>'),
+  dl:icon('<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>'),
   kb:icon('<rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/>'),
   del:icon('<path d="M21 5H9l-6 7 6 7h12zM18 9l-6 6M12 9l6 6"/>'),
   grid:icon('<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>')
@@ -334,7 +350,7 @@ function card(kind,i,list=false){
   const poster=S.tmdb&&(kind==='movies'||kind==='series')?`/api/poster?kind=${kind==='series'?'tv':'movie'}&q=${encodeURIComponent(i.name)}&year=${i.year||''}&tmdb=${i.tmdb||''}&lang=${labelLang(i.lang)}`:'';
   const img=i.logo||poster?`<img loading="lazy" decoding="async" src="${esc(i.logo||poster)}"${i.logo&&poster?` data-alt="${esc(poster)}"`:''} alt="">`:'';
   const bar=w&&!done?`<i class="pb" style="--w:${w}"></i>`:'';
-  if(kind==='ep'&&list)return `<div class="r" tabindex="0" data-a="play" data-k="${esc(k)}"><div class="th">${img}${bar}</div><span>${esc(i.name)}</span>${done?'<em>'+tr('Watched')+'</em>':''}</div>`;
+  if(kind==='ep'&&list)return `<div class="r" tabindex="0" data-a="play" data-k="${esc(k)}"><div class="th">${img}${bar}</div><span>${esc(i.name)}</span>${done?'<em>'+tr('Watched')+'</em>':''}${S.downloads?`<button class="dl-ep" data-a="dl" data-k="${esc(k)}" aria-label="${tr('Download')}" title="${tr('Download')}">${I.dl}</button>`:''}</div>`;
   const heart=kind==='ep'?'':`<b class="f${S.fav[k]?' on':''}" data-a="fav" data-k="${esc(k)}" title="${tr('My List')}">${HEART}</b>`;
   const live=kind==='live',guide=live&&i.epg?`<small class="now" data-epg="${esc(i.epg)}"></small>`:'';
   const tag=done?'<em>'+tr('Watched')+'</em>':live&&i.num?`<em>${esc(i.num)}</em>`:'';
@@ -398,10 +414,11 @@ const statusLine=()=>`<p class="st" data-st="${esc(src)}" aria-live="polite"></p
 
 const skeleton=(rows=3)=>Array.from({length:rows},()=>`<div class="row"><div class="skel t"></div><div class="skel">${'<i></i>'.repeat(8)}</div></div>`).join('');
 
+const tabs=()=>S.downloads?[...TABS,['downloads','Downloads']]:TABS;
 function drawNav(){
   document.body.dataset.tab=tab;
   $('#nav').setAttribute('aria-label',tr('Sections'));
-  $('#nav').innerHTML=TABS.map(([t,l])=>`<button data-a="go" data-t="${t}"${t===tab?' class="on" aria-current="page"':''}>${tr(l)}</button>`).join('');
+  $('#nav').innerHTML=tabs().map(([t,l])=>`<button data-a="go" data-t="${t}"${t===tab?' class="on" aria-current="page"':''}>${tr(l)}</button>`).join('');
   const s=S.sources.find(s=>s.id===src);
   $('#tools').innerHTML=`<button class="ib" data-a="dash" aria-label="${tr('Dashboard')}" title="${tr('Dashboard')}">${I.grid}</button><button class="ib${tab==='search'?' on':''}" data-a="go" data-t="search" aria-label="${tr('Search')}" title="${tr('Search')}">${I.search}</button>`
     +(S.sources.length>1?`<button class="src" id="srcb" data-a="menu" data-m="src" aria-label="${tr('Source')}: ${esc(s?.name)}">${I.tv}<span>${esc(s?.name)}</span>${I.down}</button>`:'')
@@ -413,7 +430,7 @@ function go(t,opt={}){
   if(t==='search'){sk=opt.kind||'all';cat=opt.cat||'';yr=opt.yr||'';query=''}
   drawNav();
   setHero('');
-  ({home,live:()=>browse('live'),movies:()=>browse('movies'),series:()=>browse('series'),favs,search,settings})[t]();
+  ({home,live:()=>browse('live'),movies:()=>browse('movies'),series:()=>browse('series'),favs,search,settings,downloads})[t]();
 }
 
 function empty(){
@@ -595,12 +612,94 @@ function favs(){
   swap(tr('My List'),`<div class="pg"><div class="ph"><h1>${tr('My List')}</h1></div>${out||`<p class="msg">${tr('Nothing here yet. Use the heart on any channel, movie or series to save it.')}</p>`}</div>`);
 }
 
+// Downloads run on the server, and the list is asked for once a second while one is busy or the page is open.
+// A server without downloads, such as the Android app, sends no S.downloads and shows none of this.
+let DL={dir:'',jobs:[]},dlTimer=null,dlShape='';
+const dlJob=k=>DL.jobs.find(j=>j.key===k);
+const dlBusy=j=>j.state==='queued'||j.state==='downloading';
+const size=n=>n>=1e9?(n/1e9).toFixed(2)+' GB':(n/1e6).toFixed(0)+' MB';
+const DL_FAILS={stream:'This is a stream, not a file, so it cannot be saved.',disk:'The download folder cannot be written to, or the disk is full.'};
+function dlText(j){
+  if(j.state==='queued')return tr('Waiting');
+  if(j.state==='done')return tr('Downloaded');
+  if(j.state==='failed'){
+    const code=j.error.startsWith('http:')?j.error.slice(5):'';
+    return `${tr('Download failed.')} ${code?tr('The server answered with error {code}.',{code}):tr(DL_FAILS[j.error]||FAILS[j.error]||FAILS.other)}`;
+  }
+  return j.size?`${Math.floor(j.got/j.size*100)}% · ${size(j.got)} / ${size(j.size)}`:size(j.got);
+}
+// Buttons on movie and episode pages show how far their title is
+function dlButtons(){
+  document.querySelectorAll('[data-a="dl"]').forEach(b=>{
+    const j=dlJob(b.dataset.k),done=j?.state==='done',busy=j&&dlBusy(j);
+    b.classList.toggle('done',done);
+    b.classList.toggle('busy',!!busy);
+    const label=done?tr('Downloaded'):busy?tr('Downloading'):tr('Download');
+    b.title=label;
+    b.setAttribute('aria-label',label);
+    const text=$('span',b);
+    if(text)text.textContent=j?.state==='downloading'&&j.size?`${Math.floor(j.got/j.size*100)}%`:label;
+  });
+}
+function dlRows(){
+  const box=$('#dls');
+  if(!box)return;
+  // Redrawn only when the list really changes, so the remote's selection stays where it is during progress
+  const shape=DL.jobs.map(j=>j.id+j.state).join();
+  if(shape!==dlShape||!box.children.length){
+    const at=document.activeElement?.dataset?.id,act=document.activeElement?.dataset?.a;
+    dlShape=shape;
+    box.innerHTML=DL.jobs.map(j=>`<div class="dlr" data-job="${esc(j.id)}"><div><b>${esc(j.name)}</b><small${j.state==='failed'?' class="bad"':''}></small>${dlBusy(j)?'<p class="bar"><i></i></p>':''}</div>${j.state==='failed'?`<button class="btn" data-a="dlretry" data-id="${esc(j.id)}">${tr('Try again')}</button>`:''}<button class="ib" data-a="dlrm" data-id="${esc(j.id)}" aria-label="${tr(j.state==='done'?'Remove from this list':'Cancel')}" title="${tr(j.state==='done'?'Remove from this list':'Cancel')}">${I.x}</button></div>`).join('')||`<p class="msg">${tr('Nothing here yet. Use Download on a movie or episode to save it.')}</p>`;
+    if(at)(box.querySelector(`[data-a="${act}"][data-id="${CSS.escape(at)}"]`)||box.querySelector('button')||$('#nav .on'))?.focus();
+  }
+  for(const j of DL.jobs){
+    const r=box.querySelector(`[data-job="${CSS.escape(j.id)}"]`);
+    if(!r)continue;
+    $('small',r).textContent=dlText(j);
+    $('.bar i',r)?.style.setProperty('--w',j.size?j.got/j.size*100:0);
+  }
+}
+async function dlPoll(){
+  clearTimeout(dlTimer);
+  dlTimer=null;
+  if(!S.downloads)return;
+  const before=new Map(DL.jobs.map(j=>[j.id,j.state]));
+  try{DL=await api('downloads')}catch{return}
+  for(const j of DL.jobs){
+    const was=before.get(j.id);
+    if(was&&was!==j.state&&j.state==='done')toast(tr('{name} is downloaded',{name:j.name}));
+    if(was&&was!==j.state&&j.state==='failed')toast(tr('{name} could not be downloaded',{name:j.name}));
+  }
+  dlButtons();
+  dlRows();
+  if(tab==='downloads'||DL.jobs.some(dlBusy))dlTimer=setTimeout(dlPoll,1000);
+}
+function dlItem(k){
+  const i=REG[k];
+  if(i.kind==='ep')return {key:k,kind:'ep',url:i.url,series:i.series,season:i.season,ep:i.ep,title:i.title,label:`${i.series} S${i.season} E${i.ep}`};
+  return {key:k,kind:'movies',src:i.src,id:i.id,name:i.name,year:i.year||'',label:i.name};
+}
+async function download(keys){
+  const fresh=keys.filter(k=>{const j=dlJob(k);return !j||j.state==='failed'});
+  if(!fresh.length){const j=dlJob(keys[0]);return toast(j?.state==='done'?tr('Already downloaded'):tr('Already downloading'))}
+  await api('download',{items:fresh.map(dlItem)});
+  toast(fresh.length===1?tr('Added {name} to Downloads',{name:dlItem(fresh[0]).label}):tr('Added {n} episodes to Downloads',{n:fresh.length}));
+  dlPoll();
+}
+function downloads(){
+  swap(tr('Downloads'),`<div class="pg"><div class="set"><div class="ph"><h1>${tr('Downloads')}</h1></div><p class="dlf">${esc(S.downloads?.dir)}</p><div id="dls"></div></div></div>`);
+  dlShape='';
+  dlRows();
+  dlPoll();
+}
+
 function settings(){
   swap(tr('Settings'),`<div class="pg"><div class="set"><div class="ph"><h1>${tr('Settings')}</h1></div>
 <h2>${tr('Language')}</h2><div class="card"><div class="s"><span>${esc(langName(S.lang)||'English')}</span><button class="btn" data-a="lang">${tr('Change')}</button></div></div>
 ${S.remote?`<h2>${tr('Phone remote')}</h2><div class="card"><p>${esc(tr('Open {url} on your phone, then add it to your home screen.')).replace('{url}',`<code>${esc(S.remote)}</code>`)}</p></div>`:''}
 <h2>${tr('Sources')}</h2><div class="card">${S.sources.map(s=>`<div class="s"><span>${esc(s.name)}<small>${s.type==='xtream'?'Xtream':'M3U'}</small><em class="st" data-st="${esc(s.id)}" aria-live="polite"></em></span><button class="btn" data-a="refresh" data-id="${esc(s.id)}">${tr('Reload')}</button><button class="btn" data-a="del" data-id="${esc(s.id)}">${tr('Remove')}</button></div>`).join('')||`<p class="msg" style="padding:0">${tr('No sources yet.')}</p>`}</div>
 <h2>${tr('Add a source')}</h2><div class="card"><form id="sf"><select name="type" aria-label="${tr('Source')}"><option value="m3u">${tr('M3U playlist')}</option><option value="xtream">${tr('Xtream login')}</option></select><input name="name" placeholder="${tr('Name')}" required><input name="url" type="url" placeholder="${tr('Playlist or server address')}" required><input name="user" placeholder="${tr('Username (Xtream only)')}" autocomplete="off"><input name="pass" type="password" placeholder="${tr('Password (Xtream only)')}" autocomplete="off"><button class="btn pri">${tr('Add source')}</button></form></div>
+${S.downloads?`<h2>${tr('Downloads')}</h2><div class="card"><form id="df"><input name="dir" value="${esc(S.downloads.dir)}" aria-label="${tr('Download folder')}" autocomplete="off"><button class="btn pri">${tr('Save folder')}</button></form></div>`:''}
 <h2>${tr('Artwork')}</h2><div class="card"><form id="tf"><input name="tmdb" type="password" placeholder="${tr(S.tmdb?'Key saved. Paste a new one to replace it':'Free TMDB API key for posters, wallpapers and translated summaries')}" autocomplete="off"><button class="btn pri">${tr('Save key')}</button></form></div></div></div>`);
   watchStatus();
 }
@@ -735,15 +834,17 @@ async function openSeries(k){
     let now=next.season;
     const fav=`<button class="btn list${S.fav[k]?' on':''}" data-a="fav" data-k="${esc(k)}">${I.plus}${I.check}${tr('My List')}</button>`;
     const draw=focus=>{
-      const eps=[...info.seasons[now]].sort((a,b)=>a.ep-b.ep).map(e=>card('ep',{...e,src:s.src,name:`${e.ep}. ${e.name}`},true)).join('');
+      const eps=[...info.seasons[now]].sort((a,b)=>a.ep-b.ep).map(e=>card('ep',{...e,src:s.src,name:`${e.ep}. ${e.name}`,title:e.name,series:s.name,season:now},true)).join('');
       REG[ek(next)]??={...next,src:s.src,kind:'ep',name:`${next.ep}. ${next.name}`};
       d.innerHTML=`<div class="top">${art.backdrop||s.logo?`<img class="bd" src="${esc(art.backdrop||s.logo)}" alt="">`:''}<button class="ib x" data-a="close" aria-label="${tr('Close')}">${I.x}</button>
         <h2 class="title">${esc(s.name)}</h2><p class="pl">${esc(art.plot||info.plot||s.plot||'')}</p>
-        <div class="acts"><button class="btn pri" id="splay" data-a="play" data-k="${esc(ek(next))}">${I.play}${tr(last?'Resume':'Play')} S${esc(next.season)} E${next.ep}</button>${fav}</div></div>
+        <div class="acts"><button class="btn pri" id="splay" data-a="play" data-k="${esc(ek(next))}">${I.play}${tr(last?'Resume':'Play')} S${esc(next.season)} E${next.ep}</button>${fav}${S.downloads?`<button class="btn" data-a="dlseason">${I.dl}${tr('Download season')}</button>`:''}</div></div>
         <div class="body">${nums.length>1?`<div class="tabs">${nums.map(n=>`<button class="chip${n===now?' on':''}" data-a="season" data-n="${esc(n)}">${tr('Season {n}',{n:esc(n)})}</button>`).join('')}</div>`:''}<div class="eps">${eps}</div></div>`;
+      dlButtons();
       (focus?d.querySelector(`[data-n="${CSS.escape(now)}"]`):$('#splay',d))?.focus({preventScroll:true});
     };
     d._set=n=>{now=n;draw(true)};
+    d._season=()=>[...d.querySelectorAll('.eps [data-a="dl"]')].map(b=>b.dataset.k);
     draw(false);
   }catch{d.innerHTML=`<div class="top"><button class="ib x" data-a="close" aria-label="${tr('Close')}">${I.x}</button><p class="msg">${tr('Episodes could not be loaded.')}</p></div>`;$('.x',d).focus()}
 }
@@ -778,7 +879,8 @@ async function openMovie(k){
   d.innerHTML=`<div class="top">${bd?`<img class="bd" src="${esc(bd)}" alt="">`:''}<button class="ib x" data-a="close" aria-label="${tr('Close')}">${I.x}</button>
     <h2 class="title">${esc(m.name)}</h2>${facts.length?`<p class="facts">${facts.map(esc).join(' · ')}</p>`:''}
     <p class="pl">${esc(plot||tr('There is no description for this movie.'))}</p>${info.cast?`<p class="cast">${esc(tr('With {cast}',{cast:info.cast}))}</p>`:''}
-    <div class="acts"><button class="btn pri" id="mplay" data-a="play" data-k="${esc(k)}">${I.play}${resume?tr('Resume from {time}',{time:fmt(p.pos)}):tr('Play')}</button><button class="btn list${S.fav[k]?' on':''}" data-a="fav" data-k="${esc(k)}">${I.plus}${I.check}${tr('My List')}</button></div></div>`;
+    <div class="acts"><button class="btn pri" id="mplay" data-a="play" data-k="${esc(k)}">${I.play}${resume?tr('Resume from {time}',{time:fmt(p.pos)}):tr('Play')}</button><button class="btn list${S.fav[k]?' on':''}" data-a="fav" data-k="${esc(k)}">${I.plus}${I.check}${tr('My List')}</button>${S.downloads?`<button class="btn" data-a="dl" data-k="${esc(k)}">${I.dl}<span></span></button>`:''}</div></div>`;
+  dlButtons();
   $('#mplay',d).focus({preventScroll:true});
 }
 
@@ -821,6 +923,10 @@ document.addEventListener('click',async e=>{
       return api('fav',{key:d.k,item:on?item:null});
     }
     if(a==='play')return play(d.k);
+    if(a==='dl')return await download([d.k]);
+    if(a==='dlseason')return await download(el.closest('.dt')._season());
+    if(a==='dlretry'){await api('download/retry',{id:d.id});return dlPoll()}
+    if(a==='dlrm'){await api('download/remove',{id:d.id});return dlPoll()}
     if(a==='lang')return chooseLang(el);
     if(a==='dash')return location.href='/';
     if(a==='osk'){e.preventDefault();return openKeyboard()}
@@ -839,6 +945,7 @@ document.addEventListener('submit',async e=>{
   const f=Object.fromEntries(new FormData(e.target));
   try{
     if(e.target.id==='sf'){const r=await api('source',f);S=await api('state');src=src||r.id;drawNav();toast(tr('Source added'))}
+    else if(e.target.id==='df'){await api('download/folder',{dir:f.dir});S=await api('state');toast(tr('Folder saved'))}
     else{await api('settings',{tmdb:f.tmdb});S=await api('state');toast(tr('Key saved'));wall()}
     settings();
   }catch{toast(tr('That did not work. Check the details and try again.'))}
@@ -938,6 +1045,7 @@ window.addEventListener('focus',refresh);
   setLang(S.lang);
   go('home');
   wall();
+  dlPoll();
   if(!S.lang)chooseLang();
 })();
 </script>
